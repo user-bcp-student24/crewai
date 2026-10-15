@@ -11,6 +11,7 @@ Variables de entorno:
 import os
 import re
 import json
+import subprocess
 import threading
 import requests
 
@@ -302,6 +303,8 @@ def list_projects() -> list[dict]:
         raw = result
     else:
         raw = result.get("projects", result.get("items", []))
+    if not raw:
+        raw = _list_projects_via_gh()
 
     return [
         {
@@ -312,6 +315,33 @@ def list_projects() -> list[dict]:
         }
         for p in raw
     ]
+
+
+def _list_projects_via_gh() -> list[dict]:
+    """Fallback cuando el MCP no devuelve proyectos en action=list.
+
+    Usa GitHub CLI para listar proyectos del owner configurado y entrega
+    un shape compatible con el flujo actual.
+    """
+    if not _OWNER:
+        return []
+
+    try:
+        completed = subprocess.run(
+            ["gh", "project", "list", "--owner", _OWNER, "--format", "json"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+    except (subprocess.SubprocessError, FileNotFoundError):
+        return []
+
+    try:
+        payload = json.loads(completed.stdout or "{}")
+    except json.JSONDecodeError:
+        return []
+
+    return payload.get("projects", []) if isinstance(payload, dict) else []
 
 
 def _normalize_project_item(it: dict) -> dict:

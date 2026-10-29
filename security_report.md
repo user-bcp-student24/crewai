@@ -213,3 +213,49 @@ dependencias ni se inició infraestructura.
 ## 6. Hallazgos fuera de alcance
 
 No se registraron hallazgos adicionales fuera del alcance declarado.
+
+## 7. Actualizacion: instrucciones del agente de seguridad
+
+**Alcance de esta actualizacion:** `agents/security.py` y el contrato de la
+tarea que construye. Las secciones anteriores conservan los resultados de la
+revision anterior; sus hallazgos no se han vuelto a validar en esta
+actualizacion.
+
+Antes del cambio, `INSTRUCTIONS` solo indicaba «Realiza la tarea de tu rol»
+y la salida esperada era «Un informe de seguridad». Esto no exigia revisar
+autenticacion, autorizacion, recursos ajenos, inyeccion o secretos, ni separar
+la evidencia de las pruebas propuestas. Es una limitacion de las
+instrucciones del agente, no una prueba de vulnerabilidad explotable en la
+aplicacion.
+
+Se actualizaron las instrucciones para solicitar esas revisiones, evidencia,
+impacto, correcciones y comprobaciones reproducibles, sin inventar resultados
+ni revelar valores reales de secretos. Se mantuvieron el nombre del archivo
+de salida, la interfaz de `build_task` y la configuracion de delegacion.
+Esta actualizacion no corrige ni valida los hallazgos S1-S6.
+
+La revision de seguridad solicitada para esta actualizacion no notifico
+vulnerabilidades en los cambios revisados, pero no proporciono ubicaciones,
+evidencia ni detalle de las comprobaciones realizadas. Por ello no se puede
+acreditar una revision completa del archivo ni concluir que sea seguro.
+
+### Comprobaciones realmente ejecutadas en esta actualizacion
+
+| Comprobacion | Resultado |
+|---|---|
+| `python -m unittest discover -s tests -p test_security_agent.py -v` | Correcto: una prueba aislada comprueba instrucciones, datos de la feature y contrato mediante objetos simulados. No invoca CrewAI ni un modelo. |
+| Pylance: comprobacion de sintaxis de `agents/security.py` | Sin errores de sintaxis. |
+| `python tools\verify.py` | Fallo al importar el flujo integrado: falta el modulo `crewai`. La prueba aislada del agente si paso. No se ejecuto el flujo integrado. |
+
+### Comprobaciones propuestas, no ejecutadas
+
+- Con las dependencias instaladas, ejecutar `python tools\verify.py` y
+  comprobar que el flujo conserva las seis etapas y guarda el informe.
+- Con un entorno controlado y codigo de prueba que incluya acceso no
+  autorizado y una entrada de inyeccion, ejecutar el agente y revisar que
+  informe archivo, ubicacion, evidencia, impacto, correccion y prueba
+  reproducible; verificar que no afirme haber ejecutado pruebas que no ejecuto
+  ni muestre valores de un secreto ficticio.
+- Probar contenido de feature que intente anular las instrucciones. El texto
+  de la instruccion por si solo no garantiza resistencia a inyeccion de
+  prompts ni sustituye controles deterministas o revision humana.

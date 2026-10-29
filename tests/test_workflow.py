@@ -34,6 +34,23 @@ class WorkflowTests(unittest.TestCase):
                 self.assertIn(criterion, tasks[role.KEY].description)
             self.assertTrue(Path(role.__file__).is_file())
 
+    def test_chapter_task_requires_evidence_based_review(self):
+        task = build_tasks(FEATURE)["chapter"]
+
+        for requirement in (
+            "matriz",
+            "persistencia",
+            "seguridad",
+            "responsable",
+            "cómo verificar",
+            "pruebas pendientes",
+            "aprobaciones humanas",
+            "chapter_review.md",
+        ):
+            self.assertIn(requirement, task.description)
+        self.assertIn("SIN EVIDENCIA", task.description)
+        self.assertIn("VEREDICTO: RECHAZADO", task.description)
+
     def test_pipeline_saves_all_roles_and_resumes(self):
         calls = []
 
